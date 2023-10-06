@@ -2,24 +2,14 @@
 #include "MDR32F9Qx_port.h"
 #include "MDR32F9Qx_rst_clk.h"
 
-
-
 #define LED1_PIN    PORT_Pin_2   
 #define LED2_PIN    PORT_Pin_3   
 #define LED3_PIN    PORT_Pin_5   
 #define LED4_PIN    PORT_Pin_1   
 
 
-#define LED_ON      1
-#define LED_OFF     0
-
 volatile static uint8_t but_flag = 0;
 
-void delay(uint32_t delay_count) {
-    for (volatile uint32_t i = 0; i < delay_count; ++i) {
-    
-    }
-}
 
 void init_leds() {
 
@@ -42,8 +32,6 @@ void init_leds() {
     PORT_Init(MDR_PORTA, &port_a_init);
 }
 void init_button() {
-
-    RST_CLK_PCLKcmd(RST_CLK_PCLK_PORTA, ENABLE);
 
 
     PORT_InitTypeDef port_init;
@@ -69,17 +57,23 @@ int main() {
 		init_button();
 		while(1){
 			if (but_flag) {
-
-        //PORT_ClearITPendingBit(MDR_PORTC, PORT_IT_PIN_0);
-				button_cnt++;
-				if (button_cnt > 16) button_cnt = 0;
-        
-        PORT_WriteBit(MDR_PORTC, LED1_PIN, (button_cnt & 1) ? 1 : 0);
-        PORT_WriteBit(MDR_PORTA, LED2_PIN, (button_cnt & 2) ? 1 : 0);
-        PORT_WriteBit(MDR_PORTA, LED3_PIN, (button_cnt & 4) ? 1 : 0);
-        PORT_WriteBit(MDR_PORTA, LED4_PIN, (button_cnt & 8) ? 1 : 0);
-				for(uint32_t i=0; i<3000000; i++);
+				
+				NVIC_DisableIRQ(EXT_INT1_IRQn);
+				for(uint32_t i=0; i<500000; i++);
 				but_flag = 0;
+				NVIC_EnableIRQ(EXT_INT1_IRQn);
+				
+        //PORT_ClearITPendingBit(MDR_PORTC, PORT_IT_PIN_0);
+				if (!but_flag) {
+					button_cnt++;
+					if (button_cnt > 16) button_cnt = 0;
+					
+					PORT_WriteBit(MDR_PORTC, LED1_PIN, (button_cnt & 1) ? 1 : 0);
+					PORT_WriteBit(MDR_PORTA, LED2_PIN, (button_cnt & 2) ? 1 : 0);
+					PORT_WriteBit(MDR_PORTA, LED3_PIN, (button_cnt & 4) ? 1 : 0);
+					PORT_WriteBit(MDR_PORTA, LED4_PIN, (button_cnt & 8) ? 1 : 0);
+					
+				}
 			}
 		}
     
